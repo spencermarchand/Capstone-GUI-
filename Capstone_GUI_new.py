@@ -1,10 +1,9 @@
-
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QRegularExpression, Qt
 import sys
-from SingleImageDetector import Detectron_Detector
+from SingleImageDetector_V4 import Detectron_Detector
 import numpy as np
 class Ui_MainWindow(QMainWindow):
     
@@ -25,7 +24,7 @@ class Ui_MainWindow(QMainWindow):
         self.knots_list.setObjectName("knots_list")
         #self.knots_list.setStyleSheet("border: 1px solid black; padding: 5px;")
         self.knots_list.setAlignment(Qt.AlignmentFlag.AlignTop) #aligns the text to the top of the scroll area
-        self.knots_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn) #sets the scroll bar to always be on
+        self.knots_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff) #sets the scroll bar to always be on
         self.knots_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff) #sets the horizontal scroll bar to always be off
 
         #Define the label for the list of knots
@@ -51,6 +50,13 @@ class Ui_MainWindow(QMainWindow):
         self.train_button.setText("Predict") #sets the text of the button
         self.train_button.clicked.connect(lambda: self.trainAndShow()) #connect the button to the trainAndShow function
 
+        #Define the clear Button
+        self.clear_button = QtWidgets.QPushButton(self.centralwidget) #define the button
+        self.clear_button.setGeometry(QtCore.QRect(size.width()-400,size.height()-200, 121, 41)) #sets the size and location of the button
+        self.clear_button.setObjectName("clear_button") #sets the name of the button
+        self.clear_button.setText("Clear") #sets the text of the button
+        self.clear_button.clicked.connect(lambda: self.clearAll()) #connect the button to the clear function
+
         #Define the Previous Image button (getting removed)
         # self.Image.setObjectName("Image")
         # self.previous_image = QtWidgets.QPushButton(self.centralwidget)
@@ -61,26 +67,34 @@ class Ui_MainWindow(QMainWindow):
         # self.next_image.setObjectName("next_image")
 
         #Define the label for the number of knots
-        self.knot_select = QtWidgets.QLabel(self.centralwidget) #define the label
-        self.knot_select.setGeometry(QtCore.QRect(210, size.height()-260, 87, 20)) #sets the size and location of the label
-        self.knot_select.setObjectName("knot_select") #sets the name of the label
+        self.conf_label = QtWidgets.QLabel(self.centralwidget) #define the label
+        self.conf_label.setGeometry(QtCore.QRect(210, size.height()-260, 150, 20)) #sets the size and location of the label
+        self.conf_label.setObjectName("confidence box") #sets the name of the label
 
         #Define the split selector label
-        self.split_selector = QtWidgets.QLabel(self.centralwidget) #define the label
-        self.split_selector.setGeometry(QtCore.QRect(210, size.height()-230, 87, 20)) #sets the size and location of the label
-        self.split_selector.setObjectName("split_selector") #sets the name of the label
+        # self.split_selector = QtWidgets.QLabel(self.centralwidget) #define the label
+        # self.split_selector.setGeometry(QtCore.QRect(210, size.height()-230, 87, 20)) #sets the size and location of the label
+        # self.split_selector.setObjectName("split_selector") #sets the name of the label
 
         #define the partial selector label
-        self.partial_selector = QtWidgets.QLabel(self.centralwidget) #define the label
-        self.partial_selector.setGeometry(QtCore.QRect(210, size.height()-200, 87, 20)) #sets the size and location of the label
-        self.partial_selector.setObjectName("partial_selector") #sets the name of the label
+        # self.partial_selector = QtWidgets.QLabel(self.centralwidget) #define the label
+        # self.partial_selector.setGeometry(QtCore.QRect(210, size.height()-200, 87, 20)) #sets the size and location of the label
+        # self.partial_selector.setObjectName("partial_selector") #sets the name of the label
 
         #Define the knot selector box
-        self.knot_box = QtWidgets.QLineEdit(self.centralwidget) #define the box
-        self.knot_box.setGeometry(QtCore.QRect(280, size.height()-260, 160, 24)) #sets the size and location of the box
+        self.conf_box = QtWidgets.QLineEdit(self.centralwidget) #define the box
+        self.conf_box.setGeometry(QtCore.QRect(345, size.height()-260, 160, 24)) #sets the size and location of the box
        # self.knot_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.knot_box.setObjectName("knot_box") #sets the name of the box
+        self.conf_box.setObjectName("conf_box") #sets the name of the box
+        # set validator to only allow ints and doubles
+        # Create a validator using the regular expression
+        # Create a regular expression that matches integers and doubles
+        regex = QRegularExpression("^[+-]?[0-9]*[.]?[0-9]+$")
 
+        # Create a validator using the regular expression
+        validator = QRegularExpressionValidator(regex, self.conf_box)
+        self.conf_box.setValidator(validator)
+    
         #Define the progress bar (getting removed)
         # self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
         # self.progressBar.setGeometry(QtCore.QRect(420, 380, 118, 23))
@@ -88,16 +102,16 @@ class Ui_MainWindow(QMainWindow):
         # self.progressBar.setObjectName("progressBar")
 
         #Define the split selector box
-        self.split_box = QtWidgets.QLineEdit(self.centralwidget) #define the box
-        self.split_box.setGeometry(QtCore.QRect(280, size.height()-230, 160, 24)) #sets the size and location of the box
-        #self.split_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.split_box.setObjectName("split_box") #sets the name of the box
+        # self.split_box = QtWidgets.QLineEdit(self.centralwidget) #define the box
+        # self.split_box.setGeometry(QtCore.QRect(280, size.height()-230, 160, 24)) #sets the size and location of the box
+        # #self.split_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        # self.split_box.setObjectName("split_box") #sets the name of the box
 
         #Define the partial selector box
-        self.partial_box = QtWidgets.QLineEdit(self.centralwidget) #define the box
-        self.partial_box.setGeometry(QtCore.QRect(280, size.height()-200, 160, 24)) #sets the size and location of the box
-       # self.partial_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.partial_box.setObjectName("partial_box") #sets the name of the box
+    #     self.partial_box = QtWidgets.QLineEdit(self.centralwidget) #define the box
+    #     self.partial_box.setGeometry(QtCore.QRect(280, size.height()-200, 160, 24)) #sets the size and location of the box
+    #    # self.partial_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+    #     self.partial_box.setObjectName("partial_box") #sets the name of the box
 
 
         MainWindow.setCentralWidget(self.centralwidget) #sets the central widget
@@ -125,53 +139,65 @@ class Ui_MainWindow(QMainWindow):
 
         #Retranslate the UI and set the text
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow")) #Title of the window
+        MainWindow.setWindowTitle(_translate("MainWindow", "Plywood Defect Predictor")) #Title of the window
         self.open_folder.setText(_translate("MainWindow", "Open Folder"))  #Text for the open folder button
-        self.knot_select.setText(_translate("MainWindow", "Knots size")) #Text for the knot selector label
-        self.split_selector.setText(_translate("MainWindow", "Splits width")) #Text for the split selector label
-        self.partial_selector.setText(_translate("MainWindow", "Partial size")) #Text for the partial selector label
-        self.knot_box.setValidator(QtGui.QIntValidator(0, 100000)) #Set the validator values for the knot selector box
-        self.split_box.setValidator(QtGui.QIntValidator(0, 100000)) #Set the validator values for the split selector box
-        self.partial_box.setValidator(QtGui.QIntValidator(0, 100000)) #Set the validator values for the partial selector box
+        self.conf_label.setText(_translate("MainWindow", "Confidence Threshold")) #Text for the knot selector label
         self.knots_list.setWidget(self.knots_list_label) #Set the knots list widget to the knots list label
-         
+        
+    def clearAll(MainWindow):
+        
+        MainWindow.graphicsView.clear() #clear the image
+        MainWindow.knots_list_label.clear() #clear the knots list
+        MainWindow.conf_box.clear() #clear the confidence box
+        fileName = None #set the filename to none
         
 
     def trainAndShow(MainWindow):
 
-        try: 
+        try:
+            #get the value from the confidence box
+            conf = MainWindow.conf_box.text()
+            if not conf:
+                conf = 0.5
+            else:
+                conf = float(conf)
+
             #create the predictor
             predictor = Detectron_Detector()
-            predictor.make_predictor(weights = '/Users/spencermarchand/Documents/VS_code/Python/Capstone/training/model_NEW_DATA_V1.pth', score_thresh=0.5)
+            predictor.make_predictor(weights = '/Users/spencermarchand/Documents/VS_code/Python/Capstone/Training_1_BAD/model_final.pth', score_thresh=conf)
 
             #make the prediciton on the image using the filename from the file dialog
-            b_boxes = predictor.predict(fileName)
-            print("Bounding boxes" + str(b_boxes))
-
+            b_boxes_dict = predictor.predict_classes(fileName)
+            print(b_boxes_dict)
+            knot_centers = predictor.compute_centers(b_boxes_dict['knots'])
+            partial_centers = predictor.compute_centers(b_boxes_dict['partials'])
+            centers = np.concatenate((knot_centers, partial_centers), axis=0)
             #save the image into a variable
             label_img_path = predictor.save_image('/Users/spencermarchand/Documents/VS_code/Python/Capstone/training/output_predictions')
 
+            print("knott centers: ", knot_centers)
+            print("partial centers: ", partial_centers)
+            print("centers: ", centers)
+            
             #put the predicited image into the graphics view
             MainWindow.graphicsView.setPixmap(QtGui.QPixmap(label_img_path))
 
-            #get the data from the bounding boxes
-            data = predictor.extract_data(b_boxes)
-            print(data)
-
             #Take the datapoints and create a string to display into the scrollable area.
-            centerPoints = " Center Points: " +"\n"
-            areaStr = " Areas: " + "\n"
-            for i,row in enumerate(data):
-                centerPoints += " {:d}: {:.2f}, {:.2f}".format(i+1 ,row[0], row[1]) + "\n"
-            for i,row in enumerate(data):
-                areaStr += " {:d}: {:.2f}".format(i+1,row[2]) + "\n"
-            result = centerPoints +"\n" +areaStr
-            MainWindow.knots_list_label.setText(result)
-
+            centerPointsKnots = " Knot Center Points: " +"\n"
+            centerPointsPartials = " Partials Center Points: " +"\n"
+            allpoints = ''
+            for i,row in enumerate(knot_centers):
+                centerPointsKnots += " {:d}: {:.2f}, {:.2f}".format(i+1 ,row[0], row[1]) + "\n"
+            for i,row in enumerate(partial_centers):
+                centerPointsPartials += " {:d}: {:.2f}, {:.2f}".format(i+1 ,row[0], row[1]) + "\n"
+            allpoints = centerPointsKnots + '\n' + centerPointsPartials
+            MainWindow.knots_list_label.setText(allpoints)
             #send the data to the database
-            #predictor.send_to_db(data)
-        except:
-            MainWindow.graphicsView.setText("No image selected") #Throw error if the user never selected the image
+            #predictor.send_to_plc(centers)
+        except NameError:
+            MainWindow.graphicsView.setText("Please pick an image") #Throw error if the user never selected the image
+        except Exception:
+            MainWindow.graphicsView.setText("Error")
 
 
     def openImage(MainWindow):
@@ -196,4 +222,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow) #setup the UI
     MainWindow.show() #show the main window
     sys.exit(app.exec()) #exit the application when the user closes the window
-
